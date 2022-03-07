@@ -148,10 +148,10 @@ def detectRightElbowAngle(poseLandmarks, thresholdLow, thresholdHigh, lastKeyFra
 def analyze_swing(data):
 
     result = {
-        "left arm angle": detectBentLeftArm(data, 170, data['backswingFrame']),
-        "lateral head movement": detectLateralHeadMovement(data, 80, data['setupFrame'], data['backswingFrame'], data['impactFrame']),
-        "vertical head movement": detectVerticalHeadMovement(data, 90, data['setupFrame'], data['backswingFrame'], data['impactFrame']),
-        "hip sway": detectHipSway(data, 40, data['setupFrame'], data['backswingFrame'], data['impactFrame'])
+        "leftArmAngle": detectBentLeftArm(data, 170, data['backswingFrame']),
+        "lateralHeadMovement": detectLateralHeadMovement(data, 80, data['setupFrame'], data['backswingFrame'], data['impactFrame']),
+        "verticalHeadMovement": detectVerticalHeadMovement(data, 90, data['setupFrame'], data['backswingFrame'], data['impactFrame']),
+        "hipSway": detectHipSway(data, 40, data['setupFrame'], data['backswingFrame'], data['impactFrame'])
     }
 
     return result
