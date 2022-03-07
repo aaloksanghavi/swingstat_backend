@@ -1,1 +1,1 @@
-"web: gunicorn app:swing_api" 
+"web: gunicorn swing_api:app" 
