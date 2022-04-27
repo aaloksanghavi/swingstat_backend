@@ -8,10 +8,10 @@ app = Flask(__name__)
 @app.route('/swing', methods=['POST'])
 def json_example():
     request_data = request.get_json()
-
     output = analyze.analyze_swing(request_data)
 
     return output
-#if __name__ == '__main__':
+
+if __name__ == '__main__':
     # run app in debug mode on port 5000
-    #app.run(port=5000)
+    app.run(port=5000)

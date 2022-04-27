@@ -1,27 +1,43 @@
 import math
 import json
 
+ 
+# print(getAngle((5, 0), (0, 0), (0, 5)))
+
 def radians_to_degrees(radians):
     return radians * (180/math.pi)
 
+
+def detectTempo(setupFrame, backswingFrame, impactFrame):
+    num_backswingFrames = backswingFrame - setupFrame
+    num_downswingFrames = impactFrame - backswingFrame
+    ratio = num_backswingFrames / num_downswingFrames
+    return ratio
+
 # Compares left arm angle at top of backswing to threshold
 def detectBentLeftArm(poseLandmarks, threshold, keyFrame):
-    leftShoulderX = poseLandmarks['poses'][str(keyFrame)]['poseLandmarks'][str(11)]['position']['x']
-    leftShoulderY = poseLandmarks['poses'][str(keyFrame)]['poseLandmarks'][str(11)]['position']['y']
-    leftElbowX = poseLandmarks['poses'][str(keyFrame)]['poseLandmarks'][str(13)]['position']['x']
-    leftElbowY = poseLandmarks['poses'][str(keyFrame)]['poseLandmarks'][str(13)]['position']['y']
-    leftWristX = poseLandmarks['poses'][str(keyFrame)]['poseLandmarks'][str(15)]['position']['x']
-    leftWristY = poseLandmarks['poses'][str(keyFrame)]['poseLandmarks'][str(15)]['position']['y']
+    # A is shoulder, B is Elbow, C is wrist
+    A = (poseLandmarks['poses'][str(keyFrame)]['poseLandmarks'][str(11)]['position']['x'], poseLandmarks['poses'][str(keyFrame)]['poseLandmarks'][str(11)]['position']['y'])
+    B = (poseLandmarks['poses'][str(keyFrame)]['poseLandmarks'][str(13)]['position']['x'], poseLandmarks['poses'][str(keyFrame)]['poseLandmarks'][str(13)]['position']['y'])
+    C = (poseLandmarks['poses'][str(keyFrame)]['poseLandmarks'][str(15)]['position']['x'], poseLandmarks['poses'][str(keyFrame)]['poseLandmarks'][str(15)]['position']['y'])
     
-    leftElbowToShoulderYDiff = leftElbowY - leftShoulderY
-    leftShoulderToElbowXDiff = leftShoulderX - leftElbowX
-    leftElbowToWristYDiff = leftElbowY - leftWristY
-    leftElbowToWristXDiff = leftWristX - leftElbowX
+    BA = (A[0] - B[0], A[1] - B[1])
+    BC = (C[0] - B[0], C[1] - B[1])
     
-    leftArmAngleRads = math.pi - abs(math.atan(leftElbowToWristYDiff / leftElbowToWristXDiff))
-    leftArmAngleDegrees = radians_to_degrees(leftArmAngleRads) - radians_to_degrees(math.atan(leftElbowToShoulderYDiff / leftShoulderToElbowXDiff))
+    print(A)
+    print(B)
+    print(C)
     
-#     return leftArmAngleDegrees
+    print(BA)
+    print(BC)
+    
+    mag_BA = math.sqrt(BA[0]**2 + BA[1]**2)
+    mag_BC = math.sqrt(BC[0]**2 + BC[1]**2)
+    
+    BA_dot_BC = BA[0] * BC[0] + BA[1] * BC[1]
+    
+    leftArmAngleRads = math.acos(BA_dot_BC / (mag_BA * mag_BC))
+    leftArmAngleDegrees = radians_to_degrees(leftArmAngleRads)
     
     
     if leftArmAngleDegrees >= threshold:
@@ -151,7 +167,8 @@ def analyze_swing(data):
         "leftArmAngle": detectBentLeftArm(data, 170, data['backswingFrame']),
         "lateralHeadMovement": detectLateralHeadMovement(data, 80, data['setupFrame'], data['backswingFrame'], data['impactFrame']),
         "verticalHeadMovement": detectVerticalHeadMovement(data, 90, data['setupFrame'], data['backswingFrame'], data['impactFrame']),
-        "hipSway": detectHipSway(data, 40, data['setupFrame'], data['backswingFrame'], data['impactFrame'])
+        "hipSway": detectHipSway(data, 40, data['setupFrame'], data['backswingFrame'], data['impactFrame']),
+        "swingTempo": detectTempo(data['setupFrame'], data['backswingFrame'], data['impactFrame'])
     }
 
     return result
