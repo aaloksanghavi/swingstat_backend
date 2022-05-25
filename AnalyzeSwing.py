@@ -1,5 +1,34 @@
 import math
 import json
+import numpy as np
+
+
+def calc_arm_length(poseLandmarks, impactFrame):
+    shoulder = (poseLandmarks['poses'][str(impactFrame)]['poseLandmarks'][str(11)]['position']['x'], poseLandmarks['poses'][str(impactFrame)]['poseLandmarks'][str(11)]['position']['y'])
+    elbow = (poseLandmarks['poses'][str(impactFrame)]['poseLandmarks'][str(13)]['position']['x'], poseLandmarks['poses'][str(impactFrame)]['poseLandmarks'][str(13)]['position']['y'])
+    wrist = (poseLandmarks['poses'][str(impactFrame)]['poseLandmarks'][str(15)]['position']['x'], poseLandmarks['poses'][str(impactFrame)]['poseLandmarks'][str(15)]['position']['y'])
+    
+    dist_wrist_to_elbow = math.sqrt((elbow[0] - wrist[0])**2 + (elbow[1] - wrist[1])**2)
+    dist_shoulder_to_elbow = math.sqrt((shoulder[0] - elbow[0])**2 + (shoulder[1] - elbow[1])**2)
+    
+    return dist_wrist_to_elbow + dist_shoulder_to_elbow
+
+
+def arc_length(theta, arm_length, club_length):
+    a = np.pi*2*((90-theta)/360.0)*np.sqrt(arm_length*arm_length + club_length*club_length)
+    b = (np.pi/2.0)*np.sqrt(club_length*club_length+club_length*arm_length+(1-(np.sqrt(2)/2.0))*arm_length*arm_length)
+    c = (np.pi/2.0)*np.sqrt(club_length*club_length+(np.sqrt(2)-1)*club_length*arm_length+(1-(np.sqrt(2)/2.0))*arm_length*arm_length)
+    
+    return a+b+c
+
+def swing_speed(arc,down,imp,fps):
+    dur = (imp-down)/fps
+    
+    # Converts to mph from meters/second
+    return(2.23694*2*arc/dur)
+
+def total(speed):
+    return 2.6*speed
 
  
 # print(getAngle((5, 0), (0, 0), (0, 5)))
@@ -161,6 +190,14 @@ def detectRightElbowAngle(poseLandmarks, thresholdLow, thresholdHigh, lastKeyFra
     else:
         return False
 
+
+def calculateDistance(data):
+    conversion = 204/0.7
+    arm_length = calc_arm_length(data, data['impactFrame']) / conversion
+    total = total(swing_speed(arc_length(10,arm_length,1.2),data['backswingFrame'],data['impactFrame'],240))
+    return total
+
+
 def analyze_swing(data):
 
     result = {
@@ -168,7 +205,8 @@ def analyze_swing(data):
         "lateralHeadMovement": detectLateralHeadMovement(data, 80, data['setupFrame'], data['backswingFrame'], data['impactFrame']),
         "verticalHeadMovement": detectVerticalHeadMovement(data, 90, data['setupFrame'], data['backswingFrame'], data['impactFrame']),
         "hipSway": detectHipSway(data, 40, data['setupFrame'], data['backswingFrame'], data['impactFrame']),
-        "swingTempo": detectTempo(data['setupFrame'], data['backswingFrame'], data['impactFrame'])
+        "swingTempo": detectTempo(data['setupFrame'], data['backswingFrame'], data['impactFrame']),
+        "estimatedDistance": calculateDistance(data)
     }
 
     return result
